@@ -1,120 +1,121 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAdminStore } from '../../store/useAdminStore.js'
+import AppointmentRow from '../../components/appointment/AppointmentRow.jsx'
 import Spinner from '../../components/ui/Spinner.jsx'
-import { formatCurrency } from '../../utils/formatCurrency.js'
-import { formatSlotDate } from '../../utils/formatDate.js'
-import Badge, { getAppointmentStatus } from '../../components/ui/Badge.jsx'
+import EmptyState from '../../components/ui/EmptyState.jsx'
+import ConfirmDialog from '../../components/ui/ConfirmDialog.jsx'
 
-function StatCard({ icon, label, value, sub, color = 'primary' }) {
-  const colors = {
-    primary: 'from-primary to-on-primary-fixed-variant',
-    green: 'from-green-500 to-green-600',
-    amber: 'from-amber-500 to-amber-600',
-    purple: 'from-purple-500 to-purple-600',
+const TABS = ['Tous', 'En attente', 'Payé', 'Terminé', 'Annulé']
+
+export default function AdminAppointmentsPage() {
+  const { appointments, loading, fetchAppointments, cancelAppointment } = useAdminStore()
+  const [activeTab, setActiveTab] = useState('Tous')
+  const [confirmId, setConfirmId] = useState(null)
+  const [cancelling, setCancelling] = useState(false)
+  const [search, setSearch] = useState('')
+
+  useEffect(() => { fetchAppointments() }, [])
+
+  const filtered = appointments
+    .filter((a) => {
+      if (activeTab === 'Tous') return true
+      if (activeTab === 'Annulé') return a.cancelled
+      if (activeTab === 'Terminé') return !a.cancelled && a.isCompleted
+      if (activeTab === 'Payé') return !a.cancelled && !a.isCompleted && a.isPaid
+      if (activeTab === 'En attente') return !a.cancelled && !a.isCompleted && !a.isPaid
+      return true
+    })
+    .filter((a) =>
+      search === '' ||
+      a.userData?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      a.docData?.name?.toLowerCase().includes(search.toLowerCase())
+    )
+
+  const handleCancel = async () => {
+    setCancelling(true)
+    await cancelAppointment(confirmId)
+    setCancelling(false)
+    setConfirmId(null)
   }
-  return (
-    <div className={`bg-gradient-to-br ${colors[color]} rounded-2xl p-6 text-white shadow-lg`}>
-      <div className="flex items-start justify-between mb-4">
-        <span className="material-symbols-outlined text-[28px] opacity-90">{icon}</span>
-        {sub && <span className="text-xs font-semibold opacity-80 bg-white/20 px-2 py-1 rounded-full">{sub}</span>}
-      </div>
-      <p className="text-3xl font-bold">{value}</p>
-      <p className="text-sm opacity-80 mt-1">{label}</p>
-    </div>
-  )
-}
-
-export default function AdminDashboardPage() {
-  const { dashData, appointments, loading, fetchDashboard, fetchAppointments } = useAdminStore()
-
-  useEffect(() => {
-    fetchDashboard()
-    fetchAppointments()
-  }, [])
-
-  if (loading && !dashData) return <Spinner size="lg" className="py-32" />
-
-  // ── Calcul des revenus totaux depuis la liste des rendez-vous ──
-  // (l'API /dashboard ne renvoie pas de revenus, on les calcule)
-  const totalRevenue = appointments.reduce((sum, appt) => {
-    return (appt.isCompleted || appt.isPaid) && !appt.cancelled ? sum + (appt.amount || 0) : sum
-  }, 0)
-
-  const recentAppts = appointments.slice(0, 8)
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-on-surface">Tableau de bord</h1>
-        <p className="text-on-surface-variant text-sm mt-1">Vue d'ensemble de la plateforme Sehaty</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-on-surface">Rendez-vous</h1>
+          <p className="text-sm text-on-surface-variant mt-1">
+            {appointments.length} rendez-vous au total
+          </p>
+        </div>
+        <div className="relative">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+          <input
+            type="text"
+            placeholder="Patient ou médecin..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-10 pl-10 pr-4 rounded-xl border border-outline-variant bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none w-64"
+          />
+        </div>
       </div>
 
-      {/* Stats */}
-      {/* Le backend renvoie : dashData.doctors / dashData.patients / dashData.appointments */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon="medical_services"
-          label="Médecins"
-          value={dashData?.doctors ?? '—'}
-          color="primary"
-        />
-        <StatCard
-          icon="group"
-          label="Patients"
-          value={dashData?.patients ?? '—'}
-          color="green"
-        />
-        <StatCard
-          icon="calendar_month"
-          label="Rendez-vous"
-          value={dashData?.appointments ?? '—'}
-          color="amber"
-        />
-        <StatCard
-          icon="payments"
-          label="Revenus"
-          value={appointments.length > 0 ? formatCurrency(totalRevenue) : '—'}
-          color="purple"
-        />
+      {/* Tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {TABS.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+              activeTab === tab
+                ? 'bg-primary text-on-primary shadow-sm'
+                : 'bg-surface-container-low text-on-surface-variant border border-outline-variant hover:border-primary/30'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
 
-      {/* Latest appointments */}
-      <div className="bg-surface-container-lowest rounded-2xl shadow-md p-6">
-        <h2 className="text-lg font-semibold text-on-surface mb-5">Derniers rendez-vous</h2>
-        {recentAppts.length === 0 ? (
-          <div className="text-center py-10">
-            <span className="material-symbols-outlined text-[40px] text-outline block mb-2">calendar_month</span>
-            <p className="text-sm text-on-surface-variant">Aucun rendez-vous pour le moment</p>
-          </div>
-        ) : (
+      {loading ? (
+        <Spinner size="lg" className="py-16" />
+      ) : filtered.length === 0 ? (
+        <EmptyState icon="calendar_month" title="Aucun rendez-vous" description="Aucun rendez-vous dans cette catégorie." />
+      ) : (
+        <div className="bg-surface-container-lowest rounded-2xl shadow-md overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-outline-variant bg-surface-container">
-                  <th className="py-3 px-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Patient</th>
-                  <th className="py-3 px-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Médecin</th>
-                  <th className="py-3 px-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Date</th>
-                  <th className="py-3 px-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Montant</th>
-                  <th className="py-3 px-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Statut</th>
+                  {['Patient', 'Médecin', 'Date', 'Heure', 'Montant', 'Statut', 'Actions'].map((h) => (
+                    <th key={h} className="py-3 px-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider whitespace-nowrap">{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {recentAppts.map((appt) => (
-                  <tr key={appt._id} className="border-b border-outline-variant/40 hover:bg-surface-container/30 transition-colors">
-                    <td className="py-3 px-4 text-sm font-medium text-on-surface">{appt.userData?.name || '—'}</td>
-                    <td className="py-3 px-4 text-sm text-on-surface-variant">{appt.docData?.name || '—'}</td>
-                    <td className="py-3 px-4 text-sm text-on-surface">{formatSlotDate(appt.slotDate)} – {appt.slotTime}</td>
-                    <td className="py-3 px-4 text-sm font-semibold text-on-surface">{formatCurrency(appt.amount)}</td>
-                    <td className="py-3 px-4">
-                      <Badge status={getAppointmentStatus(appt)} />
-                    </td>
-                  </tr>
+                {filtered.map((appt) => (
+                  <AppointmentRow
+                    key={appt._id}
+                    appointment={appt}
+                    showDoctor={true}
+                    onCancel={!appt.cancelled && !appt.isCompleted ? (id) => setConfirmId(id) : null}
+                  />
                 ))}
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        isOpen={!!confirmId}
+        onClose={() => setConfirmId(null)}
+        onConfirm={handleCancel}
+        loading={cancelling}
+        title="Annuler le rendez-vous"
+        message="Êtes-vous sûr de vouloir annuler ce rendez-vous ? Le patient sera notifié."
+        confirmLabel="Oui, annuler"
+        variant="danger"
+      />
     </div>
   )
 }

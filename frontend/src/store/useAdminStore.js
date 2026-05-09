@@ -61,7 +61,7 @@ export const useAdminStore = create((set, get) => ({
     try {
       const res = await adminApi.getPatients()
       if (res.data.success) {
-        set({ patients: res.data.patients || [] })
+        set({ patients: res.data.users || [] })
       }
     } finally {
       set({ loading: false })
