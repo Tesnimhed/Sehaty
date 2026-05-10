@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react'
 import { useAdminStore } from '../../store/useAdminStore.js'
 import Spinner from '../../components/ui/Spinner.jsx'
 import EmptyState from '../../components/ui/EmptyState.jsx'
+import ConfirmDialog from '../../components/ui/ConfirmDialog.jsx'
 import { formatDate } from '../../utils/formatDate.js'
 
 export default function AdminPatientsPage() {
-  const { patients, loading, fetchPatients } = useAdminStore()
+  const { patients, loading, fetchPatients, deletePatient } = useAdminStore()
   const [search, setSearch] = useState('')
+  const [confirmId, setConfirmId] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => { fetchPatients() }, [])
 
@@ -16,8 +19,30 @@ export default function AdminPatientsPage() {
     p.phone?.includes(search)
   )
 
+  const handleDelete = async () => {
+    setDeleting(true)
+    await deletePatient(confirmId)
+    setDeleting(false)
+    setConfirmId(null)
+  }
+
+  // Format dob : peut être ISO string ou "Not Selected" ou vide
+  const formatDob = (dob) => {
+    if (!dob || dob === 'Not Selected') return '—'
+    const d = new Date(dob)
+    if (isNaN(d)) return dob
+    return d.toLocaleDateString('fr-FR')
+  }
+
+  // Format genre
+  const formatGender = (g) => {
+    if (!g || g === 'Not Selected') return '—'
+    return g
+  }
+
   return (
     <div className="p-6 space-y-6">
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-on-surface">Patients</h1>
@@ -32,7 +57,7 @@ export default function AdminPatientsPage() {
             placeholder="Nom, email, téléphone..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-10 pl-10 pr-4 rounded-xl border border-outline-variant bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none w-64"
+            className="h-10 pl-10 pr-4 rounded-xl border border-outline-variant bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none w-full md:w-72"
           />
         </div>
       </div>
@@ -40,40 +65,71 @@ export default function AdminPatientsPage() {
       {loading ? (
         <Spinner size="lg" className="py-16" />
       ) : filtered.length === 0 ? (
-        <EmptyState icon="group" title="Aucun patient trouvé" description="Aucun patient ne correspond à votre recherche." />
+        <EmptyState
+          icon="group"
+          title="Aucun patient trouvé"
+          description="Aucun patient ne correspond à votre recherche."
+        />
       ) : (
         <div className="bg-surface-container-lowest rounded-2xl shadow-md overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-left min-w-[800px]">
               <thead>
                 <tr className="border-b border-outline-variant bg-surface-container">
-                  {['Patient', 'Email', 'Téléphone', 'Genre', 'Date de naissance', 'Inscrit le'].map((h) => (
-                    <th key={h} className="py-3 px-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider whitespace-nowrap">{h}</th>
+                  {['Patient', 'Email', 'Téléphone', 'Genre', 'Date de naissance', 'Inscrit le', 'Actions'].map((h) => (
+                    <th key={h} className="py-3 px-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider whitespace-nowrap">
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((patient) => (
-                  <tr key={patient._id} className="border-b border-outline-variant/40 hover:bg-surface-container/30 transition-colors">
+                  <tr key={patient._id} className="border-b border-outline-variant/40 hover:bg-surface-container/30 transition-colors group">
+                    {/* Patient */}
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high flex-shrink-0">
-                          {patient.image ? (
-                            <img src={patient.image} alt={patient.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <span className="material-symbols-outlined text-outline text-[18px]">person</span>
-                            </div>
-                          )}
+                        <div className="w-9 h-9 rounded-full overflow-hidden bg-surface-container-high flex-shrink-0">
+                          {patient.image
+                            ? <img src={patient.image} alt={patient.name} className="w-full h-full object-cover" />
+                            : <div className="w-full h-full flex items-center justify-center">
+                                <span className="material-symbols-outlined text-outline text-[16px]">person</span>
+                              </div>
+                          }
                         </div>
-                        <span className="text-sm font-semibold text-on-surface">{patient.name || '—'}</span>
+                        <span className="text-sm font-semibold text-on-surface whitespace-nowrap">{patient.name || '—'}</span>
                       </div>
                     </td>
+
+                    {/* Email */}
                     <td className="py-3 px-4 text-sm text-on-surface-variant">{patient.email || '—'}</td>
-                    <td className="py-3 px-4 text-sm text-on-surface">{patient.phone || '—'}</td>
-                    <td className="py-3 px-4 text-sm text-on-surface-variant">{patient.gender || '—'}</td>
-                    <td className="py-3 px-4 text-sm text-on-surface">{patient.dob || '—'}</td>
-                    <td className="py-3 px-4 text-sm text-on-surface-variant whitespace-nowrap">{formatDate(patient.date)}</td>
+
+                    {/* Téléphone */}
+                    <td className="py-3 px-4 text-sm text-on-surface">
+                      {(!patient.phone || patient.phone === '0000000000') ? '—' : patient.phone}
+                    </td>
+
+                    {/* Genre */}
+                    <td className="py-3 px-4 text-sm text-on-surface">{formatGender(patient.gender)}</td>
+
+                    {/* Date de naissance */}
+                    <td className="py-3 px-4 text-sm text-on-surface">{formatDob(patient.dob)}</td>
+
+                    {/* Inscrit le — utilise createdAt (timestamps: true dans le modèle) */}
+                    <td className="py-3 px-4 text-sm text-on-surface-variant whitespace-nowrap">
+                      {patient.createdAt ? formatDate(patient.createdAt) : '—'}
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-3 px-4">
+                      <button
+                        onClick={() => setConfirmId(patient._id)}
+                        className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-error bg-error-container/40 hover:bg-error-container rounded-xl transition-all"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">delete</span>
+                        Supprimer
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -81,6 +137,17 @@ export default function AdminPatientsPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!confirmId}
+        title="Supprimer ce patient ?"
+        message="Cette action est irréversible. Le compte et tous les rendez-vous en cours seront supprimés définitivement."
+        confirmLabel="Supprimer"
+        confirmVariant="error"
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmId(null)}
+      />
     </div>
   )
 }

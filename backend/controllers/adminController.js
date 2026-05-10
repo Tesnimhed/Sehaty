@@ -192,8 +192,30 @@ const allPatients = async (req, res) => {
   }
 };
 
+// ── Supprimer un patient ──────────────────────────────────────
+const deletePatient = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId)
+      return res.status(400).json({ success: false, message: t(req.lang, 'missingDetails') });
+
+    await userModel.findByIdAndDelete(userId);
+
+    // Annuler tous ses rendez-vous en cours
+    await appointmentModel.updateMany(
+      { userId, cancelled: false, isCompleted: false },
+      { cancelled: true }
+    );
+
+    res.status(200).json({ success: true, message: 'Patient supprimé avec succès.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: t(req.lang, 'serverError') });
+  }
+};
+
 export {
   addDoctor, loginAdmin, allDoctors, appointmentAdmin,
   appointmentCancel, adminDashboard, deleteDoctor,
-  toggleDoctorAvailabilityAdmin, allPatients
+  toggleDoctorAvailabilityAdmin, allPatients, deletePatient,
 };
