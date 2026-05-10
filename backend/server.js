@@ -16,12 +16,22 @@ const port = process.env.PORT || 4000;
 connectDB();
 if (process.env.CLOUDINARY_CLOUD_NAME) connectCloudinary();
 
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true,
-  })
-);
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'https://ton-frontend-vercel.vercel.app'
+]
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true
+}))
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(setLanguage);
