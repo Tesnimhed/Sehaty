@@ -5,11 +5,11 @@
 // Templates HTML personnalisés avec branding Sehaty
 // ============================================================
 
-import * as Brevo from '@getbrevo/brevo';
+import SibApiV3Sdk from 'sib-api-v3-sdk';
 
 // ── Client Brevo ──────────────────────────────────────────────
-const apiInstance = new Brevo.TransactionalEmailsApi();
-apiInstance.authentications['apiKey'].apiKey = process.env.BREVO_API_KEY;
+const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+apiInstance.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
 
 const SENDER = { name: 'Sehaty 🏥', email: process.env.EMAIL_USER };
 
@@ -140,7 +140,7 @@ const welcomeTemplate = (name) => baseTemplate(`
  * Envoie un email de vérification OTP
  */
 export const sendOtpEmail = async (to, name, otp) => {
-  const email = new Brevo.SendSmtpEmail();
+  const email = new SibApiV3Sdk.SendSmtpEmail();
   email.sender = SENDER;
   email.to = [{ email: to, name }];
   email.subject = `${otp} — Votre code de vérification Sehaty`;
@@ -152,7 +152,7 @@ export const sendOtpEmail = async (to, name, otp) => {
  * Envoie un email de bienvenue après inscription confirmée
  */
 export const sendWelcomeEmail = async (to, name) => {
-  const email = new Brevo.SendSmtpEmail();
+  const email = new SibApiV3Sdk.SendSmtpEmail();
   email.sender = SENDER;
   email.to = [{ email: to, name }];
   email.subject = `Bienvenue sur Sehaty, ${name} !`;
