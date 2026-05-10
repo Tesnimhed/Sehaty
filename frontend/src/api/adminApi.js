@@ -16,4 +16,7 @@ export const adminApi = {
   toggleAvailability: (docId) =>
     api.post('/api/admin/toggle-disponibilite', { docId }),
   getPatients: () => api.get('/api/admin/liste-patients'),
+  // FIX : méthode manquante — appelée par useAdminStore.deletePatient()
+  deletePatient: (userId) =>
+    api.post('/api/admin/supprimer-patient', { userId }),
 }

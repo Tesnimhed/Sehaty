@@ -129,11 +129,11 @@ const loginUser = async (req, res) => {
 };
 
 // ── Récupération du profil connecté ──────────────────────────
-// userId est injecté par le middleware authUser (décodage JWT)
+// FIX : sur une requête GET, req.body est vide — on utilise req.userId
+// injecté par authUser comme alias direct sur req (pas dans body).
 const getProfile = async (req, res) => {
   try {
-    const { userId } = req.body;
-    // select("-password") : exclut le mot de passe haché de la réponse
+    const userId = req.userId || req.body.userId;
     const userData = await userModel.findById(userId).select('-password');
     res.status(200).json({ success: true, userData });
   } catch (error) {
@@ -145,8 +145,9 @@ const getProfile = async (req, res) => {
 // ── Mise à jour du profil (avec photo optionnelle) ────────────
 const updateProfile = async (req, res) => {
   try {
-    const { userId, name, phone, address, dob, gender } = req.body;
-    const imageFile = req.file; // Fichier uploadé via multer (optionnel)
+    const userId = req.userId || req.body.userId;
+    const { name, phone, address, dob, gender } = req.body;
+    const imageFile = req.file;
 
     // Validation des champs requis (phone et dob sont optionnels)
     if (!name || !gender)
@@ -177,7 +178,8 @@ const updateProfile = async (req, res) => {
 // passe par paymentController (create-booking-intent + confirm-and-book).
 const bookAppointment = async (req, res) => {
   try {
-    const { userId, docId, slotDate, slotTime } = req.body;
+    const userId = req.userId || req.body.userId;
+    const { docId, slotDate, slotTime } = req.body;
 
     // Vérification existence et disponibilité du médecin
     const docData = await doctorModel.findById(docId).select('-password');
@@ -198,7 +200,7 @@ const bookAppointment = async (req, res) => {
     // Snapshot des données au moment de la réservation (pour historique)
     const userData = await userModel.findById(userId).select('-password');
     const docInfo = docData.toObject();
-    delete docInfo.slots_booked; // On n'a pas besoin des créneaux dans le snapshot
+    delete docInfo.slots_booked;
 
     // Enregistrement du RDV (isPaid: false = réservation sans paiement)
     const newAppointment = new appointmentModel({
@@ -217,9 +219,10 @@ const bookAppointment = async (req, res) => {
 };
 
 // ── Liste des rendez-vous du patient connecté ─────────────────
+// FIX : req.body.userId est vide sur GET — on utilise req.userId
 const listAppointments = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const userId = req.userId || req.body.userId;
     // Tri par date décroissante (plus récent en premier)
     const appointments = await appointmentModel.find({ userId }).sort({ date: -1 });
     res.status(200).json({ success: true, appointments });
@@ -230,11 +233,10 @@ const listAppointments = async (req, res) => {
 };
 
 // ── Annulation d'un RDV par le patient ───────────────────────
-// Note : le remboursement Stripe est géré séparément si le RDV
-// a été payé (voir paymentController.refundAppointmentPayment)
 const cancelAppointment = async (req, res) => {
   try {
-    const { userId, appointmentId } = req.body;
+    const userId = req.userId || req.body.userId;
+    const { appointmentId } = req.body;
 
     const appointmentData = await appointmentModel.findById(appointmentId);
     if (!appointmentData)
@@ -263,9 +265,10 @@ const cancelAppointment = async (req, res) => {
 };
 
 // ── Notifications du patient ──────────────────────────────────
+// FIX : req.body.userId est vide sur GET — on utilise req.userId
 const getNotifications = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const userId = req.userId || req.body.userId;
     // Tri par date de création décroissante (plus récent en premier)
     const notifications = await notificationModel.find({ userId }).sort({ createdAt: -1 });
     res.status(200).json({ success: true, notifications });
@@ -287,48 +290,47 @@ const markNotificationRead = async (req, res) => {
   }
 };
 
+// ── Mot de passe oublié : envoi OTP ──────────────────────────
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
- 
+
     if (!email)
       return res.status(400).json({ success: false, message: t(req.lang, 'missingDetails') });
- 
+
     // Vérifie que l'utilisateur existe
     const user = await userModel.findOne({ email: email.toLowerCase() });
     if (!user)
       return res.status(404).json({ success: false, message: t(req.lang, 'userNotExist') });
- 
-    // Génère et stocke un OTP (réutilise saveOtp avec hashedPassword null)
+
+    // Génère et stocke un OTP (hashedPassword null car pas de création de compte)
     const otp = generateOtp();
-    saveOtp(email.toLowerCase(), otp, user.name, null); // hashedPassword null car pas de création
- 
+    saveOtp(email.toLowerCase(), otp, user.name, null);
+
     // Envoie l'OTP par email
     await sendOtpEmail(email, user.name, otp);
- 
+
     return res.json({ success: true, message: t(req.lang, 'resetCodeSent') });
   } catch (error) {
     console.error('[forgotPassword]', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
- 
+
 // ── Étape 2 : Vérification OTP + nouveau mot de passe ────────
-// POST /api/user/reinitialiser-mot-de-passe
-// Body : { email, otp, newPassword }
 const resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
- 
+
     if (!email || !otp || !newPassword)
       return res.status(400).json({ success: false, message: t(req.lang, 'missingDetails') });
- 
+
     if (newPassword.length < 8)
       return res.status(400).json({ success: false, message: t(req.lang, 'weakPassword') });
- 
+
     // Vérifie l'OTP
     const result = verifyOtp(email.toLowerCase(), otp);
- 
+
     if (!result.valid) {
       if (result.reason === 'expired') {
         return res.status(400).json({ success: false, message: t(req.lang, 'otpExpired') });
@@ -339,16 +341,16 @@ const resetPassword = async (req, res) => {
         attemptsLeft: result.attemptsLeft,
       });
     }
- 
+
     // Hache le nouveau mot de passe et met à jour en base
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
- 
+
     await userModel.findOneAndUpdate(
       { email: email.toLowerCase() },
       { password: hashedPassword }
     );
- 
+
     return res.json({ success: true, message: t(req.lang, 'passwordResetSuccess') });
   } catch (error) {
     console.error('[resetPassword]', error);
