@@ -1,12 +1,17 @@
 import { create } from 'zustand'
 
 /**
- * useSidebar — état global de la sidebar (ouverte/fermée sur mobile).
- * Partagé entre DoctorSidebar, AdminSidebar et leurs boutons hamburger.
+ * useSidebar — état de la sidebar.
+ * - Desktop (≥768px) : ouverte par défaut
+ * - Mobile  (<768px) : fermée par défaut
+ * - Toggle fonctionne sur les deux
  */
+
+const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 768
+
 export const useSidebar = create((set) => ({
-  isOpen: false,
-  open:  () => set({ isOpen: true }),
-  close: () => set({ isOpen: false }),
+  isOpen: !isMobile(),
+  open:   () => set({ isOpen: true }),
+  close:  () => set({ isOpen: false }),
   toggle: () => set((s) => ({ isOpen: !s.isOpen })),
 }))
