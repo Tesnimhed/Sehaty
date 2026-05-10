@@ -4,6 +4,11 @@ export const userApi = {
   register: (data) => api.post('/api/user/inscription', data),
   verifyEmail: (data) => api.post('/api/user/verifier-email', data),
   login: (data) => api.post('/api/user/connexion', data),
+
+  // ── Réinitialisation mot de passe ──
+  forgotPassword: (data) => api.post('/api/user/mot-de-passe-oublie', data),
+  resetPassword: (data) => api.post('/api/user/reinitialiser-mot-de-passe', data),
+
   getProfile: () => api.get('/api/user/profil'),
   updateProfile: (formData) =>
     api.post('/api/user/mettre-a-jour-profil', formData, {

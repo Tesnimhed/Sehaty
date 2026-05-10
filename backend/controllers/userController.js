@@ -287,10 +287,81 @@ const markNotificationRead = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+ 
+    if (!email)
+      return res.status(400).json({ success: false, message: t(req.lang, 'missingDetails') });
+ 
+    // Vérifie que l'utilisateur existe
+    const user = await userModel.findOne({ email: email.toLowerCase() });
+    if (!user)
+      return res.status(404).json({ success: false, message: t(req.lang, 'userNotExist') });
+ 
+    // Génère et stocke un OTP (réutilise saveOtp avec hashedPassword null)
+    const otp = generateOtp();
+    saveOtp(email.toLowerCase(), otp, user.name, null); // hashedPassword null car pas de création
+ 
+    // Envoie l'OTP par email
+    await sendOtpEmail(email, user.name, otp);
+ 
+    return res.json({ success: true, message: t(req.lang, 'resetCodeSent') });
+  } catch (error) {
+    console.error('[forgotPassword]', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+ 
+// ── Étape 2 : Vérification OTP + nouveau mot de passe ────────
+// POST /api/user/reinitialiser-mot-de-passe
+// Body : { email, otp, newPassword }
+const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+ 
+    if (!email || !otp || !newPassword)
+      return res.status(400).json({ success: false, message: t(req.lang, 'missingDetails') });
+ 
+    if (newPassword.length < 8)
+      return res.status(400).json({ success: false, message: t(req.lang, 'weakPassword') });
+ 
+    // Vérifie l'OTP
+    const result = verifyOtp(email.toLowerCase(), otp);
+ 
+    if (!result.valid) {
+      if (result.reason === 'expired') {
+        return res.status(400).json({ success: false, message: t(req.lang, 'otpExpired') });
+      }
+      return res.status(400).json({
+        success: false,
+        message: t(req.lang, 'otpInvalid'),
+        attemptsLeft: result.attemptsLeft,
+      });
+    }
+ 
+    // Hache le nouveau mot de passe et met à jour en base
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+ 
+    await userModel.findOneAndUpdate(
+      { email: email.toLowerCase() },
+      { password: hashedPassword }
+    );
+ 
+    return res.json({ success: true, message: t(req.lang, 'passwordResetSuccess') });
+  } catch (error) {
+    console.error('[resetPassword]', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export {
   registerUser,
   verifyOtpAndCreate,
   loginUser,
+  forgotPassword,
+  resetPassword,
   getProfile,
   updateProfile,
   bookAppointment,

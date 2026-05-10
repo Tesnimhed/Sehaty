@@ -16,6 +16,8 @@ import UserRegisterPage from './pages/auth/UserRegisterPage.jsx'
 import VerifyEmailPage from './pages/auth/VerifyEmailPage.jsx'
 import DoctorLoginPage from './pages/auth/DoctorLoginPage.jsx'
 import AdminLoginPage from './pages/auth/AdminLoginPage.jsx'
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage.jsx'
+import ResetPasswordPage from './pages/auth/ResetPasswordPage.jsx'
 
 // User pages
 import HomePage from './pages/user/HomePage.jsx'
@@ -42,19 +44,12 @@ import AdminAppointmentsPage from './pages/admin/AdminAppointmentsPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 
 // ─── Bouton hamburger flottant (portails médecin / admin) ────────────────────
-// Visible uniquement sur mobile, positionné en haut à gauche.
 function SidebarToggle() {
   const { toggle } = useSidebar()
   return (
     <button
       onClick={toggle}
-      className="
-        md:hidden fixed top-3 left-3 z-50
-        w-10 h-10 flex items-center justify-center
-        bg-surface-container-lowest shadow-lg rounded-xl
-        text-on-surface-variant hover:bg-surface-container
-        transition-colors
-      "
+      className="md:hidden fixed top-3 left-3 z-50 w-10 h-10 flex items-center justify-center bg-surface-container-lowest shadow-lg rounded-xl text-on-surface-variant hover:bg-surface-container transition-colors"
       aria-label="Ouvrir le menu"
     >
       <span className="material-symbols-outlined text-[22px]">menu</span>
@@ -86,15 +81,8 @@ function DoctorLayout() {
   return (
     <ProtectedRoute role="doctor">
       <div className="min-h-screen bg-surface-container/30 flex">
-        {/* Bouton hamburger mobile */}
         <SidebarToggle />
-
         <DoctorSidebar />
-
-        {/*
-          Sur desktop : décalage fixe de 256px (ml-64) pour la sidebar.
-          Sur mobile  : pas de décalage (la sidebar est en overlay).
-        */}
         <main className="flex-1 md:ml-64 min-h-screen overflow-x-hidden">
           <Outlet />
         </main>
@@ -108,9 +96,7 @@ function AdminLayout() {
     <ProtectedRoute role="admin">
       <div className="min-h-screen bg-surface-container/30 flex">
         <SidebarToggle />
-
         <AdminSidebar />
-
         <main className="flex-1 md:ml-64 min-h-screen overflow-x-hidden">
           <Outlet />
         </main>
@@ -126,18 +112,20 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* ── Auth ── */}
-        <Route path="/connexion"      element={<UserLoginPage />} />
-        <Route path="/inscription"    element={<UserRegisterPage />} />
-        <Route path="/verifier-email" element={<VerifyEmailPage />} />
-        <Route path="/medecin/connexion" element={<DoctorLoginPage />} />
-        <Route path="/admin/connexion"   element={<AdminLoginPage />} />
+        <Route path="/connexion"              element={<UserLoginPage />} />
+        <Route path="/inscription"            element={<UserRegisterPage />} />
+        <Route path="/verifier-email"         element={<VerifyEmailPage />} />
+        <Route path="/medecin/connexion"      element={<DoctorLoginPage />} />
+        <Route path="/admin/connexion"        element={<AdminLoginPage />} />
+        <Route path="/mot-de-passe-oublie"    element={<ForgotPasswordPage />} />
+        <Route path="/reinitialiser-mot-de-passe" element={<ResetPasswordPage />} />
 
         {/* ── Patient ── */}
         <Route element={<PatientLayout />}>
-          <Route path="/"           element={<HomePage />} />
-          <Route path="/medecins"   element={<DoctorsPage />} />
+          <Route path="/"             element={<HomePage />} />
+          <Route path="/medecins"     element={<DoctorsPage />} />
           <Route path="/medecins/:id" element={<DoctorProfilePage />} />
-          <Route path="/a-propos"   element={<AboutPage />} />
+          <Route path="/a-propos"     element={<AboutPage />} />
 
           <Route path="/mes-rendez-vous" element={
             <ProtectedRoute role="user"><MyAppointmentsPage /></ProtectedRoute>

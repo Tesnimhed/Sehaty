@@ -102,7 +102,7 @@ export default function UserLoginPage() {
                 <label className="block text-sm font-semibold text-on-surface-variant" htmlFor="password">
                   Mot de passe
                 </label>
-                <a href="#" className="text-xs text-primary hover:underline">Oublié ?</a>
+                <Link to="/mot-de-passe-oublie" className="text-xs text-primary hover:underline">Oublié ?</Link>
               </div>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-[20px]">lock</span>
