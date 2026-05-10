@@ -8,17 +8,15 @@
 import nodemailer from 'nodemailer';
 
 // ── Transporter Nodemailer ────────────────────────────────────
-const createTransporter = () =>
-  nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'gmail',
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.EMAIL_PORT || '587'),
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+})
 
 // ── Template de base (layout commun) ─────────────────────────
 const baseTemplate = (content) => `
@@ -147,7 +145,6 @@ const welcomeTemplate = (name) => baseTemplate(`
  * Envoie un email de vérification OTP
  */
 export const sendOtpEmail = async (to, name, otp) => {
-  const transporter = createTransporter();
   await transporter.sendMail({
     from: `"Sehaty 🏥" <${process.env.EMAIL_USER}>`,
     to,
@@ -160,7 +157,6 @@ export const sendOtpEmail = async (to, name, otp) => {
  * Envoie un email de bienvenue après inscription confirmée
  */
 export const sendWelcomeEmail = async (to, name) => {
-  const transporter = createTransporter();
   await transporter.sendMail({
     from: `"Sehaty 🏥" <${process.env.EMAIL_USER}>`,
     to,
