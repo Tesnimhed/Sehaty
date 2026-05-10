@@ -10,13 +10,14 @@ import nodemailer from 'nodemailer';
 // ── Transporter Nodemailer ────────────────────────────────────
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
+  port: 587,
+  secure: false, // important
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-})
+  requireTLS: true,
+});
 
 // ── Template de base (layout commun) ─────────────────────────
 const baseTemplate = (content) => `
