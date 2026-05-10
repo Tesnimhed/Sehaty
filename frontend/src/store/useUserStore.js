@@ -30,8 +30,11 @@ export const useUserStore = create((set, get) => ({
         await get().fetchProfile()
         return true
       }
+      // success: false — l'interceptor axios a déjà affiché le toast d'erreur
       return false
-    } catch {
+    } catch (err) {
+      // Erreur réseau ou HTTP (401, 500…) — l'interceptor a déjà toasté
+      console.error('[updateProfile]', err?.response?.data || err.message)
       return false
     } finally {
       set({ loading: false })

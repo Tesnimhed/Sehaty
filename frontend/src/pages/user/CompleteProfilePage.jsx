@@ -87,12 +87,10 @@ export default function CompleteProfilePage() {
       const ok = await updateProfile(fd)
       if (ok) {
         navigate('/', { replace: true })
-      } else {
-        // FIX : affiche un message d'erreur explicite si l'API échoue
-        toast.error('Impossible de sauvegarder le profil. Réessayez.')
       }
-    } catch (err) {
-      toast.error('Une erreur est survenue. Réessayez.')
+      // si !ok : l'interceptor axios a déjà affiché le toast d'erreur — on ne double-toaste pas
+    } catch {
+      // ne devrait pas arriver (le store catch déjà), mais sécurité
     } finally {
       setSaving(false)
     }

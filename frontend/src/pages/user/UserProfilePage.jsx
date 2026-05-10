@@ -24,11 +24,19 @@ export default function UserProfilePage() {
     if (profile) resetForm(profile)
   }, [profile])
 
+  // FIX : strip les valeurs sentinelles MongoDB ('Not Selected', '0000000000')
+  // pour que les champs du formulaire partent de '' et non de ces placeholders.
+  const clean = (v, ...sentinels) =>
+    (!v || sentinels.includes(v)) ? '' : v
+
   const resetForm = (p) => setForm({
     name:   p.name || '',
-    phone:  p.phone || '',
-    dob:    p.dob ? p.dob.slice(0, 10) : '',
-    gender: GENDERS.includes(p.gender) ? p.gender : '',
+    phone:  clean(p.phone, '0000000000'),
+    dob:    clean(p.dob, 'Not Selected') ? p.dob.slice(0, 10) : '',
+    // FIX: si le genre vient de CompleteProfilePage ('Non précisé' inclus),
+    // on le conserve. Si absent ou inconnu, on tombe sur 'Non précisé'
+    // plutôt que '' pour ne pas bloquer la validation backend (!gender).
+    gender: GENDERS.includes(p.gender) ? p.gender : 'Non précisé',
     line1:  p.address?.line1 || '',
     line2:  p.address?.line2 || '',
   })
@@ -50,16 +58,20 @@ export default function UserProfilePage() {
   const handleSave = async () => {
     setSaving(true)
     const fd = new FormData()
-    fd.append('name',    form.name)
-    fd.append('phone',   form.phone)
-    fd.append('dob',     form.dob)
-    fd.append('gender',  form.gender)
+    fd.append('name',    form.name || 'Utilisateur')
+    if (form.phone)   fd.append('phone',   form.phone)
+    if (form.dob)     fd.append('dob',     form.dob)
+    // FIX: on envoie toujours un genre valide (jamais vide)
+    // pour satisfaire la validation backend (!gender → 400)
+    fd.append('gender', form.gender || 'Non précisé')
     fd.append('address', JSON.stringify({ line1: form.line1, line2: form.line2 }))
     if (imageFile) fd.append('image', imageFile)
     await updateProfile(fd)
     setSaving(false)
     setEditing(false)
     setImageFile(null)
+    // FIX: reset l'aperçu local — l'image réelle vient du profil rechargé
+    setImagePreview(null)
   }
 
   if (loading && !profile) return <Spinner size="lg" className="py-32" />
@@ -227,6 +239,10 @@ function Input({ type = 'text', value, onChange, placeholder }) {
   )
 }
 
+// FIX : filtre les valeurs sentinelles par défaut du modèle MongoDB
+// ('Not Selected', '0000000000') héritées d'un profil jamais complété.
+const EMPTY_SENTINELS = ['Not Selected', '0000000000']
 function Value({ children }) {
-  return <p className="text-sm text-on-surface">{children || '—'}</p>
+  const display = children && !EMPTY_SENTINELS.includes(String(children)) ? children : null
+  return <p className="text-sm text-on-surface">{display || '—'}</p>
 }
