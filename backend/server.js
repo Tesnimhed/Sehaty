@@ -17,8 +17,7 @@ connectDB();
 if (process.env.CLOUDINARY_CLOUD_NAME) connectCloudinary();
 
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'https://ton-frontend-vercel.vercel.app'
+  process.env.FRONTEND_URL
 ].filter(Boolean)
 
 app.use(cors({
