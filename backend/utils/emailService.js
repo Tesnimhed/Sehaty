@@ -1,17 +1,31 @@
 // ============================================================
-// emailService.js — Service d'envoi d'emails (Brevo)
+// emailService.js — Service d'envoi d'emails (Brevo HTTP API)
 // ============================================================
-// Gère : envoi OTP, email de bienvenue, confirmation RDV
-// Templates HTML personnalisés avec branding Sehaty
+// Pas de SDK — fetch natif Node.js, 100% compatible ESM
 // ============================================================
 
-import SibApiV3Sdk from 'sib-api-v3-sdk';
+const BREVO_URL = 'https://api.brevo.com/v3/smtp/email';
 
-// ── Client Brevo ──────────────────────────────────────────────
-const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-apiInstance.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+const sendEmail = async ({ to, name, subject, html }) => {
+  const res = await fetch(BREVO_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': process.env.BREVO_API_KEY,
+    },
+    body: JSON.stringify({
+      sender: { name: 'Sehaty 🏥', email: process.env.EMAIL_USER },
+      to: [{ email: to, name }],
+      subject,
+      htmlContent: html,
+    }),
+  });
 
-const SENDER = { name: 'Sehaty 🏥', email: process.env.EMAIL_USER };
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`Brevo error: ${res.status} — ${error}`);
+  }
+};
 
 // ── Template de base (layout commun) ─────────────────────────
 const baseTemplate = (content) => `
@@ -140,22 +154,20 @@ const welcomeTemplate = (name) => baseTemplate(`
  * Envoie un email de vérification OTP
  */
 export const sendOtpEmail = async (to, name, otp) => {
-  const email = new SibApiV3Sdk.SendSmtpEmail();
-  email.sender = SENDER;
-  email.to = [{ email: to, name }];
-  email.subject = `${otp} — Votre code de vérification Sehaty`;
-  email.htmlContent = otpTemplate(name, otp);
-  await apiInstance.sendTransacEmail(email);
+  await sendEmail({
+    to, name,
+    subject: `${otp} — Votre code de vérification Sehaty`,
+    html: otpTemplate(name, otp),
+  });
 };
 
 /**
  * Envoie un email de bienvenue après inscription confirmée
  */
 export const sendWelcomeEmail = async (to, name) => {
-  const email = new SibApiV3Sdk.SendSmtpEmail();
-  email.sender = SENDER;
-  email.to = [{ email: to, name }];
-  email.subject = `Bienvenue sur Sehaty, ${name} !`;
-  email.htmlContent = welcomeTemplate(name);
-  await apiInstance.sendTransacEmail(email);
+  await sendEmail({
+    to, name,
+    subject: `Bienvenue sur Sehaty, ${name} !`,
+    html: welcomeTemplate(name),
+  });
 };
