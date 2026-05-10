@@ -148,15 +148,15 @@ const updateProfile = async (req, res) => {
     const { userId, name, phone, address, dob, gender } = req.body;
     const imageFile = req.file; // Fichier uploadé via multer (optionnel)
 
-    // Validation des champs requis
-    if (!name || !phone || !dob || !gender)
+    // Validation des champs requis (phone et dob sont optionnels)
+    if (!name || !gender)
       return res.status(400).json({ success: false, message: t(req.lang, 'dataMissing') });
 
     // L'adresse peut arriver soit en string JSON soit déjà parsée
-    const updateData = {
-      name, phone, dob, gender,
-      address: typeof address === 'string' ? JSON.parse(address) : address
-    };
+    const updateData = { name, gender };
+    if (phone) updateData.phone = phone;
+    if (dob) updateData.dob = dob;
+    if (address) updateData.address = typeof address === 'string' ? JSON.parse(address) : address;
 
     // Si une nouvelle image est uploadée, on l'envoie sur Cloudinary
     if (imageFile) {

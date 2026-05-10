@@ -28,7 +28,11 @@ export const useUserStore = create((set, get) => ({
       if (res.data.success) {
         toast.success('Profil mis à jour avec succès')
         await get().fetchProfile()
+        return true
       }
+      return false
+    } catch {
+      return false
     } finally {
       set({ loading: false })
     }

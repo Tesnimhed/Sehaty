@@ -73,15 +73,16 @@ export default function CompleteProfilePage() {
     setSaving(true)
     const fd = new FormData()
     fd.append('name', form.name)
-    fd.append('phone', form.phone)
-    fd.append('dob', form.dob)
+    if (form.phone) fd.append('phone', form.phone)
+    if (form.dob) fd.append('dob', form.dob)
     fd.append('gender', form.gender)
-    fd.append('address', JSON.stringify({ line1: form.line1, line2: form.line2 }))
+    if (form.line1 || form.line2)
+      fd.append('address', JSON.stringify({ line1: form.line1, line2: form.line2 }))
     if (imageFile) fd.append('image', imageFile)
 
-    await updateProfile(fd)
+    const ok = await updateProfile(fd)
     setSaving(false)
-    navigate('/', { replace: true })
+    if (ok) navigate('/', { replace: true })
   }
 
   const handleSkip = () => navigate('/', { replace: true })
