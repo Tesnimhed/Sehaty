@@ -19,17 +19,22 @@ if (process.env.CLOUDINARY_CLOUD_NAME) connectCloudinary();
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'https://ton-frontend-vercel.vercel.app'
-]
+].filter(Boolean)
 
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true)
-    } else {
-      callback(new Error('Not allowed by CORS'))
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true)
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true)
     }
+
+    console.log("CORS BLOCKED:", origin)
+    return callback(null, true) // temporairement permissif pour debug
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }))
 
 app.use(express.json({ limit: '10mb' }));
