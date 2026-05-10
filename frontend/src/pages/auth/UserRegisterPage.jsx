@@ -61,6 +61,13 @@ export default function UserRegisterPage() {
 
         {/* Right panel */}
         <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+        <Link
+  to="/"
+  className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline mb-6"
+>
+  <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+  Retour à l’accueil
+</Link>
           <div className="md:hidden mb-8 text-center">
             <span className="text-2xl font-bold text-primary">Sehaty</span>
           </div>

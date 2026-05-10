@@ -29,6 +29,13 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-surface">
       <main className="w-full max-w-md">
         <div className="bg-surface-container-lowest rounded-2xl shadow-2xl p-10">
+          <Link
+  to="/"
+  className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline mb-6"
+>
+  <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+  Retour à l’accueil
+</Link>
           <div className="text-center mb-10">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <span className="material-symbols-outlined text-primary text-[32px]">admin_panel_settings</span>
