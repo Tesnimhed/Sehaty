@@ -25,7 +25,9 @@ export default function CompleteProfilePage() {
   const [form, setForm] = useState({
     name: '',
     dob: '',
-    gender: '',
+    // FIX : gender par défaut à 'Non précisé' pour éviter l'échec de validation
+    // backend qui exige un genre non vide. L'utilisateur peut toujours choisir.
+    gender: 'Non précisé',
     phone: '',
     line1: '',
     line2: '',
@@ -49,7 +51,7 @@ export default function CompleteProfilePage() {
     const errs = {}
     if (s === 0) {
       if (!form.name.trim()) errs.name = 'Nom requis'
-      if (!form.gender) errs.gender = 'Genre requis'
+      // gender a toujours une valeur par défaut, pas besoin de valider
     }
     if (s === 1) {
       if (form.phone && !/^(\+213|0)[5-7]\d{8}$/.test(form.phone.replace(/\s/g, ''))) {
@@ -71,18 +73,29 @@ export default function CompleteProfilePage() {
   // ── Soumission finale ─────────────────────────────────────
   const handleSubmit = async () => {
     setSaving(true)
-    const fd = new FormData()
-    fd.append('name', form.name)
-    if (form.phone) fd.append('phone', form.phone)
-    if (form.dob) fd.append('dob', form.dob)
-    fd.append('gender', form.gender)
-    if (form.line1 || form.line2)
-      fd.append('address', JSON.stringify({ line1: form.line1, line2: form.line2 }))
-    if (imageFile) fd.append('image', imageFile)
+    try {
+      const fd = new FormData()
+      fd.append('name', form.name.trim() || 'Utilisateur')
+      if (form.phone) fd.append('phone', form.phone)
+      if (form.dob) fd.append('dob', form.dob)
+      // FIX : on envoie toujours un genre valide (jamais vide)
+      fd.append('gender', form.gender || 'Non précisé')
+      if (form.line1 || form.line2)
+        fd.append('address', JSON.stringify({ line1: form.line1, line2: form.line2 }))
+      if (imageFile) fd.append('image', imageFile)
 
-    const ok = await updateProfile(fd)
-    setSaving(false)
-    if (ok) navigate('/', { replace: true })
+      const ok = await updateProfile(fd)
+      if (ok) {
+        navigate('/', { replace: true })
+      } else {
+        // FIX : affiche un message d'erreur explicite si l'API échoue
+        toast.error('Impossible de sauvegarder le profil. Réessayez.')
+      }
+    } catch (err) {
+      toast.error('Une erreur est survenue. Réessayez.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleSkip = () => navigate('/', { replace: true })
@@ -92,7 +105,6 @@ export default function CompleteProfilePage() {
       errors[field] ? 'border-error focus:ring-error' : 'border-outline-variant'
     }`
 
-  // ── Progress ─────────────────────────────────────────────
   const progress = Math.round(((step) / STEPS.length) * 100)
 
   return (
@@ -183,7 +195,7 @@ export default function CompleteProfilePage() {
 
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
-                    Genre <span className="text-error">*</span>
+                    Genre
                   </label>
                   <div className="flex gap-3">
                     {GENDERS.map((g) => (
@@ -195,13 +207,12 @@ export default function CompleteProfilePage() {
                           form.gender === g
                             ? 'border-primary bg-primary/10 text-primary'
                             : 'border-outline-variant text-on-surface-variant hover:border-primary/50'
-                        } ${errors.gender ? 'border-error' : ''}`}
+                        }`}
                       >
                         {g}
                       </button>
                     ))}
                   </div>
-                  {errors.gender && <p className="text-xs text-error mt-1">{errors.gender}</p>}
                 </div>
 
                 <div className="space-y-1">

@@ -200,7 +200,7 @@ export default function HomePage() {
         <div className="max-w-container-max mx-auto px-lg text-center">
           <p className="text-sm font-bold mb-1">Sehaty</p>
           <p className="text-xs opacity-60">
-            © 2025 Sehaty Algérie. Tous droits réservés. Système certifié de gestion médicale.
+            © 2026 Sehaty Algérie. Tous droits réservés. Système certifié de gestion médicale.
           </p>
         </div>
       </footer>

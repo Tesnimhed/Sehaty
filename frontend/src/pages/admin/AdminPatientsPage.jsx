@@ -26,7 +26,6 @@ export default function AdminPatientsPage() {
     setConfirmId(null)
   }
 
-  // Format dob : peut être ISO string ou "Not Selected" ou vide
   const formatDob = (dob) => {
     if (!dob || dob === 'Not Selected') return '—'
     const d = new Date(dob)
@@ -34,7 +33,6 @@ export default function AdminPatientsPage() {
     return d.toLocaleDateString('fr-FR')
   }
 
-  // Format genre
   const formatGender = (g) => {
     if (!g || g === 'Not Selected') return '—'
     return g
@@ -85,7 +83,7 @@ export default function AdminPatientsPage() {
               </thead>
               <tbody>
                 {filtered.map((patient) => (
-                  <tr key={patient._id} className="border-b border-outline-variant/40 hover:bg-surface-container/30 transition-colors group">
+                  <tr key={patient._id} className="border-b border-outline-variant/40 hover:bg-surface-container/30 transition-colors">
                     {/* Patient */}
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
@@ -115,16 +113,16 @@ export default function AdminPatientsPage() {
                     {/* Date de naissance */}
                     <td className="py-3 px-4 text-sm text-on-surface">{formatDob(patient.dob)}</td>
 
-                    {/* Inscrit le — utilise createdAt (timestamps: true dans le modèle) */}
+                    {/* Inscrit le */}
                     <td className="py-3 px-4 text-sm text-on-surface-variant whitespace-nowrap">
                       {patient.createdAt ? formatDate(patient.createdAt) : '—'}
                     </td>
 
-                    {/* Actions */}
+                    {/* Actions — FIX : toujours visible, plus opacity-0 */}
                     <td className="py-3 px-4">
                       <button
                         onClick={() => setConfirmId(patient._id)}
-                        className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-error bg-error-container/40 hover:bg-error-container rounded-xl transition-all"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-error bg-error-container/40 hover:bg-error-container rounded-xl transition-all"
                       >
                         <span className="material-symbols-outlined text-[14px]">delete</span>
                         Supprimer
@@ -138,15 +136,21 @@ export default function AdminPatientsPage() {
         </div>
       )}
 
+      {/*
+        FIX : les props passées à ConfirmDialog étaient incorrectes.
+        AdminPatientsPage passait : open, onConfirm, onCancel
+        Mais ConfirmDialog attend  : isOpen, onConfirm, onClose
+        → le dialog ne s'ouvrait jamais, le bouton supprimer ne faisait rien.
+      */}
       <ConfirmDialog
-        open={!!confirmId}
+        isOpen={!!confirmId}
         title="Supprimer ce patient ?"
         message="Cette action est irréversible. Le compte et tous les rendez-vous en cours seront supprimés définitivement."
         confirmLabel="Supprimer"
-        confirmVariant="error"
+        variant="danger"
         loading={deleting}
         onConfirm={handleDelete}
-        onCancel={() => setConfirmId(null)}
+        onClose={() => setConfirmId(null)}
       />
     </div>
   )
