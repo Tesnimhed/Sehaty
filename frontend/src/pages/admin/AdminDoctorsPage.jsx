@@ -27,6 +27,7 @@ export default function AdminDoctorsPage() {
   const [deleteId, setDeleteId] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [formErrors, setFormErrors] = useState({})
   const [form, setForm] = useState(EMPTY_FORM)
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
@@ -47,8 +48,26 @@ export default function AdminDoctorsPage() {
     setImagePreview(URL.createObjectURL(file))
   }
 
+  const validate = () => {
+    const errors = {}
+    if (!imageFile) errors.image = 'Photo requise'
+    if (!form.name.trim()) errors.name = 'Nom requis'
+    if (!form.email.trim()) errors.email = 'Email requis'
+    else if (!/\S+@\S+\.\S+/.test(form.email)) errors.email = 'Email invalide'
+    if (!form.password.trim()) errors.password = 'Mot de passe requis'
+    else if (form.password.length < 6) errors.password = 'Minimum 6 caractères'
+    if (!form.degree.trim()) errors.degree = 'Diplôme requis'
+    if (!form.fees || isNaN(form.fees) || Number(form.fees) <= 0) errors.fees = 'Honoraires invalides'
+    return errors
+  }
+
   const handleAdd = async () => {
-    if (!imageFile) { alert('Photo requise'); return }
+    const errors = validate()
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors)
+      return
+    }
+    setFormErrors({})
     setSaving(true)
     const fd = new FormData()
     Object.entries(form).forEach(([k, v]) => fd.append(k, v))
@@ -59,6 +78,7 @@ export default function AdminDoctorsPage() {
       setForm(EMPTY_FORM)
       setImageFile(null)
       setImagePreview(null)
+      setFormErrors({})
     }
     setSaving(false)
   }
@@ -165,14 +185,14 @@ export default function AdminDoctorsPage() {
       )}
 
       {/* Add Doctor Modal */}
-      <Modal isOpen={showAdd} onClose={() => setShowAdd(false)} title="Ajouter un médecin" size="lg">
+      <Modal isOpen={showAdd} onClose={() => { setShowAdd(false); setFormErrors({}) }} title="Ajouter un médecin" size="lg">
         <div className="space-y-5">
           {/* Photo */}
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-1">
             <div className="relative">
               <div
                 onClick={() => fileRef.current.click()}
-                className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-dashed border-outline-variant hover:border-primary cursor-pointer bg-surface-container-high flex items-center justify-center transition-colors"
+                className={`w-24 h-24 rounded-2xl overflow-hidden border-2 border-dashed cursor-pointer bg-surface-container-high flex items-center justify-center transition-colors ${formErrors.image ? 'border-error' : 'border-outline-variant hover:border-primary'}`}
               >
                 {imagePreview ? (
                   <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
@@ -185,20 +205,24 @@ export default function AdminDoctorsPage() {
               </div>
               <input ref={fileRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
             </div>
+            {formErrors.image && <p className="text-xs text-error font-medium">{formErrors.image}</p>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Nom complet *</label>
-              <input type="text" required placeholder="Dr. Prénom NOM" className={inputCls} {...F('name')} />
+              <input type="text" placeholder="Dr. Prénom NOM" className={`${inputCls} ${formErrors.name ? 'border-error focus:ring-error focus:border-error' : ''}`} {...F('name')} />
+              {formErrors.name && <p className="text-xs text-error">{formErrors.name}</p>}
             </div>
             <div className="space-y-1">
               <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Email *</label>
-              <input type="email" required placeholder="docteur@exemple.com" className={inputCls} {...F('email')} />
+              <input type="email" placeholder="docteur@exemple.com" className={`${inputCls} ${formErrors.email ? 'border-error focus:ring-error focus:border-error' : ''}`} {...F('email')} />
+              {formErrors.email && <p className="text-xs text-error">{formErrors.email}</p>}
             </div>
             <div className="space-y-1">
               <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Mot de passe *</label>
-              <input type="password" required placeholder="••••••••" className={inputCls} {...F('password')} />
+              <input type="password" placeholder="••••••••" className={`${inputCls} ${formErrors.password ? 'border-error focus:ring-error focus:border-error' : ''}`} {...F('password')} />
+              {formErrors.password && <p className="text-xs text-error">{formErrors.password}</p>}
             </div>
             <div className="space-y-1">
               <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Spécialité *</label>
@@ -208,7 +232,8 @@ export default function AdminDoctorsPage() {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Diplôme *</label>
-              <input type="text" required placeholder="Ex: Doctorat en médecine" className={inputCls} {...F('degree')} />
+              <input type="text" placeholder="Ex: Doctorat en médecine" className={`${inputCls} ${formErrors.degree ? 'border-error focus:ring-error focus:border-error' : ''}`} {...F('degree')} />
+              {formErrors.degree && <p className="text-xs text-error">{formErrors.degree}</p>}
             </div>
             <div className="space-y-1">
               <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Expérience *</label>
@@ -218,7 +243,8 @@ export default function AdminDoctorsPage() {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Honoraires (DZD) *</label>
-              <input type="number" required min={0} placeholder="Ex: 2500" className={inputCls} {...F('fees')} />
+              <input type="number" min={0} placeholder="Ex: 2500" className={`${inputCls} ${formErrors.fees ? 'border-error focus:ring-error focus:border-error' : ''}`} {...F('fees')} />
+              {formErrors.fees && <p className="text-xs text-error">{formErrors.fees}</p>}
             </div>
             <div className="space-y-1">
               <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Adresse du cabinet</label>

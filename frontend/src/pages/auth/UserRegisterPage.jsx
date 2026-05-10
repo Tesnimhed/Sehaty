@@ -125,8 +125,8 @@ export default function UserRegisterPage() {
                   id="password"
                   type="password"
                   required
-                  minLength={6}
-                  placeholder="Minimum 6 caractères"
+                  minLength={8}
+                  placeholder="Minimum 8 caractères"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   className="w-full h-12 pl-12 pr-4 rounded-xl border border-outline-variant bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 outline-none text-sm"

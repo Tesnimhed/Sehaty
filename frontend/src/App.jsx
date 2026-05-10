@@ -14,6 +14,7 @@ import { useSidebar } from './hooks/useSidebar.js'
 import UserLoginPage from './pages/auth/UserLoginPage.jsx'
 import UserRegisterPage from './pages/auth/UserRegisterPage.jsx'
 import VerifyEmailPage from './pages/auth/VerifyEmailPage.jsx'
+import CompleteProfilePage from './pages/auth/CompleteProfilePage.jsx'
 import DoctorLoginPage from './pages/auth/DoctorLoginPage.jsx'
 import AdminLoginPage from './pages/auth/AdminLoginPage.jsx'
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage.jsx'
@@ -44,15 +45,19 @@ import AdminAppointmentsPage from './pages/admin/AdminAppointmentsPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 
 // ─── Bouton hamburger flottant (portails médecin / admin) ────────────────────
+// Visible sur toutes les tailles. Se déplace avec la sidebar quand elle est ouverte.
 function SidebarToggle() {
-  const { toggle } = useSidebar()
+  const { toggle, isOpen } = useSidebar()
   return (
     <button
       onClick={toggle}
-      className="md:hidden fixed top-3 left-3 z-50 w-10 h-10 flex items-center justify-center bg-surface-container-lowest shadow-lg rounded-xl text-on-surface-variant hover:bg-surface-container transition-colors"
-      aria-label="Ouvrir le menu"
+      style={{ left: isOpen ? '268px' : '12px' }}
+      className="fixed top-3 z-50 w-10 h-10 flex items-center justify-center bg-surface-container-lowest shadow-lg rounded-xl text-on-surface-variant hover:bg-surface-container transition-all duration-300"
+      aria-label={isOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
     >
-      <span className="material-symbols-outlined text-[22px]">menu</span>
+      <span className="material-symbols-outlined text-[22px]">
+        {isOpen ? 'menu_open' : 'menu'}
+      </span>
     </button>
   )
 }
@@ -78,12 +83,13 @@ function PatientLayout() {
 }
 
 function DoctorLayout() {
+  const { isOpen } = useSidebar()
   return (
     <ProtectedRoute role="doctor">
       <div className="min-h-screen bg-surface-container/30 flex">
         <SidebarToggle />
         <DoctorSidebar />
-        <main className="flex-1 md:ml-64 min-h-screen overflow-x-hidden">
+        <main className={`flex-1 min-h-screen overflow-x-hidden transition-all duration-300 ${isOpen ? 'md:ml-64' : 'ml-0'}`}>
           <Outlet />
         </main>
       </div>
@@ -92,12 +98,13 @@ function DoctorLayout() {
 }
 
 function AdminLayout() {
+  const { isOpen } = useSidebar()
   return (
     <ProtectedRoute role="admin">
       <div className="min-h-screen bg-surface-container/30 flex">
         <SidebarToggle />
         <AdminSidebar />
-        <main className="flex-1 md:ml-64 min-h-screen overflow-x-hidden">
+        <main className={`flex-1 min-h-screen overflow-x-hidden transition-all duration-300 ${isOpen ? 'md:ml-64' : 'ml-0'}`}>
           <Outlet />
         </main>
       </div>
@@ -115,6 +122,9 @@ export default function App() {
         <Route path="/connexion"              element={<UserLoginPage />} />
         <Route path="/inscription"            element={<UserRegisterPage />} />
         <Route path="/verifier-email"         element={<VerifyEmailPage />} />
+        <Route path="/completer-profil"        element={
+          <ProtectedRoute role="user"><CompleteProfilePage /></ProtectedRoute>
+        } />
         <Route path="/medecin/connexion"      element={<DoctorLoginPage />} />
         <Route path="/admin/connexion"        element={<AdminLoginPage />} />
         <Route path="/mot-de-passe-oublie"    element={<ForgotPasswordPage />} />

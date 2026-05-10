@@ -92,7 +92,7 @@ export default function VerifyEmailPage() {
       if (res.data.success) {
         setUToken(res.data.token)
         toast.success('Compte créé avec succès ! Bienvenue 🎉')
-        navigate('/')
+        navigate('/completer-profil', { replace: true })
       }
     } catch (err) {
       const msg = err?.response?.data?.message || 'Code invalide.'

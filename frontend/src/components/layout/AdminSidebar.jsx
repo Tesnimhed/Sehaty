@@ -52,7 +52,6 @@ export default function AdminSidebar() {
           bg-surface-container-lowest shadow-md w-64
           transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          md:translate-x-0
         `}
         aria-label="Navigation administration"
       >

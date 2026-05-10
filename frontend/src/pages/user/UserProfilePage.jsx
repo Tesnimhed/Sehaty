@@ -8,7 +8,9 @@ export default function UserProfilePage() {
   const { profile, loading, fetchProfile, updateProfile } = useUserStore()
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({})
+  const [form, setForm] = useState({
+    name: '', phone: '', dob: '', gender: '', line1: '', line2: '',
+  })
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const fileRef = useRef()
@@ -20,8 +22,8 @@ export default function UserProfilePage() {
       setForm({
         name: profile.name || '',
         phone: profile.phone || '',
-        dob: profile.dob || '',
-        gender: profile.gender || '',
+        dob: profile.dob ? profile.dob.slice(0, 10) : '',
+        gender: ['Homme', 'Femme', 'Non précisé'].includes(profile.gender) ? profile.gender : '',
         line1: profile.address?.line1 || '',
         line2: profile.address?.line2 || '',
       })
@@ -103,7 +105,21 @@ export default function UserProfilePage() {
             ) : (
               <div className="flex gap-2">
                 <button
-                  onClick={() => { setEditing(false); setImageFile(null); setImagePreview(null) }}
+                  onClick={() => {
+                    setEditing(false)
+                    setImageFile(null)
+                    setImagePreview(null)
+                    if (profile) {
+                      setForm({
+                        name: profile.name || '',
+                        phone: profile.phone || '',
+                        dob: profile.dob ? profile.dob.slice(0, 10) : '',
+                        gender: ['Homme', 'Femme', 'Non précisé'].includes(profile.gender) ? profile.gender : '',
+                        line1: profile.address?.line1 || '',
+                        line2: profile.address?.line2 || '',
+                      })
+                    }
+                  }}
                   className="h-10 px-5 border border-outline-variant text-on-surface-variant text-sm font-semibold rounded-xl hover:bg-surface-container transition-colors"
                 >
                   Annuler

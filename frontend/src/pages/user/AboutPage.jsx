@@ -1,22 +1,22 @@
 const TEAM = [
   {
-    name: 'Dr. Karim Benali',
-    role: 'Fondateur & Directeur médical',
-    speciality: 'Cardiologue',
+    name: 'Hedjeres Tesnim',
+    role: 'Interne en génie logiciel & diagnostiqueuse de bugs',
+    speciality: 'Urgences du code',
     icon: 'favorite',
   },
   {
-    name: 'Yasmine Hamdani',
-    role: 'Directrice technique',
-    speciality: 'Ingénieure logiciel',
-    icon: 'code',
-  },
-  {
-    name: 'Amine Meziane',
-    role: 'Responsable partenariats',
-    speciality: 'Relations médicales',
+    name: 'Feriel Cherifi',
+    role: 'Cheffe de service & professeure en ingénierie',
+    speciality: 'Médecine générale du code',
     icon: 'handshake',
   },
+  {
+    name: 'Kherreddine Amira',
+    role: 'Chirurgienne logicielle & spécialiste des systèmes',
+    speciality: 'Bloc opératoire du développement',
+    icon: 'code',
+  }
 ]
 
 const VALUES = [
@@ -287,7 +287,7 @@ export default function AboutPage() {
         <div className="max-w-container-max mx-auto px-lg text-center">
           <p className="text-sm font-bold mb-1">Sehaty</p>
           <p className="text-xs opacity-60">
-            © 2025 Sehaty Algérie. Tous droits réservés.
+            © 2026 Sehaty Algérie. Tous droits réservés.
           </p>
         </div>
       </footer>

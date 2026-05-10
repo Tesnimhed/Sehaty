@@ -30,6 +30,10 @@ export const useAdminStore = create((set, get) => ({
         await get().fetchDoctors()
         return true
       }
+      // success: false → message already shown by axios interceptor
+      return false
+    } catch {
+      // HTTP error → message already shown by axios interceptor
       return false
     } finally {
       set({ loading: false })
