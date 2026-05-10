@@ -56,6 +56,15 @@ export default function UserProfilePage() {
   }
 
   const handleSave = async () => {
+    // Validation locale avant envoi
+    if (form.dob && form.dob > TODAY) {
+      toast.error('La date de naissance doit être antérieure à aujourd\'hui')
+      return
+    }
+    if (form.dob && form.dob < MIN_DOB) {
+      toast.error('Date de naissance invalide')
+      return
+    }
     setSaving(true)
     const fd = new FormData()
     fd.append('name',    form.name || 'Utilisateur')

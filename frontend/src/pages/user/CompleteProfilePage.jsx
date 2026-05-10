@@ -4,6 +4,8 @@ import { useUserStore } from '../../store/useUserStore.js'
 import toast from 'react-hot-toast'
 
 const GENDERS = ['Homme', 'Femme', 'Non précisé']
+const TODAY = new Date().toISOString().slice(0, 10)
+const MIN_DOB = `${new Date().getFullYear() - 120}-01-01`
 
 const STEPS = [
   { id: 'identity', label: 'Identité', icon: 'person' },
@@ -51,7 +53,10 @@ export default function CompleteProfilePage() {
     const errs = {}
     if (s === 0) {
       if (!form.name.trim()) errs.name = 'Nom requis'
-      // gender a toujours une valeur par défaut, pas besoin de valider
+      if (form.dob) {
+        if (form.dob > TODAY) errs.dob = 'La date de naissance doit être antérieure à aujourd\'hui'
+        else if (form.dob < MIN_DOB) errs.dob = 'Date de naissance invalide'
+      }
     }
     if (s === 1) {
       if (form.phone && !/^(\+213|0)[5-7]\d{8}$/.test(form.phone.replace(/\s/g, ''))) {
@@ -221,9 +226,11 @@ export default function CompleteProfilePage() {
                     type="date"
                     value={form.dob}
                     onChange={(e) => set('dob', e.target.value)}
-                    max={new Date().toISOString().slice(0, 10)}
+                    max={TODAY}
+                    min={MIN_DOB}
                     className={inputCls('dob')}
                   />
+                  {errors.dob && <p className="text-xs text-error mt-1">{errors.dob}</p>}
                 </div>
               </div>
             )}
