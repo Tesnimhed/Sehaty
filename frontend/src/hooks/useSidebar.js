@@ -7,10 +7,8 @@ import { create } from 'zustand'
  * - Toggle fonctionne sur les deux
  */
 
-const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 768
-
 export const useSidebar = create((set) => ({
-  isOpen: !isMobile(),
+  isOpen: typeof window !== 'undefined' ? window.innerWidth >= 768 : true,
   open:   () => set({ isOpen: true }),
   close:  () => set({ isOpen: false }),
   toggle: () => set((s) => ({ isOpen: !s.isOpen })),
