@@ -8,6 +8,7 @@ import Navbar from './components/layout/Navbar.jsx'
 import DoctorSidebar from './components/layout/DoctorSidebar.jsx'
 import AdminSidebar from './components/layout/AdminSidebar.jsx'
 import ProtectedRoute from './components/layout/ProtectedRoute.jsx'
+import { useSidebar } from './hooks/useSidebar.js'
 
 // Auth pages
 import UserLoginPage from './pages/auth/UserLoginPage.jsx'
@@ -40,6 +41,27 @@ import AdminAppointmentsPage from './pages/admin/AdminAppointmentsPage.jsx'
 
 import NotFoundPage from './pages/NotFoundPage.jsx'
 
+// ─── Bouton hamburger flottant (portails médecin / admin) ────────────────────
+// Visible uniquement sur mobile, positionné en haut à gauche.
+function SidebarToggle() {
+  const { toggle } = useSidebar()
+  return (
+    <button
+      onClick={toggle}
+      className="
+        md:hidden fixed top-3 left-3 z-50
+        w-10 h-10 flex items-center justify-center
+        bg-surface-container-lowest shadow-lg rounded-xl
+        text-on-surface-variant hover:bg-surface-container
+        transition-colors
+      "
+      aria-label="Ouvrir le menu"
+    >
+      <span className="material-symbols-outlined text-[22px]">menu</span>
+    </button>
+  )
+}
+
 // ─── Layouts ────────────────────────────────────────────────────────────────
 
 function PatientLayout() {
@@ -53,7 +75,7 @@ function PatientLayout() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pt-[72px]">
+      <main className="pt-[64px]">
         <Outlet />
       </main>
     </div>
@@ -64,8 +86,16 @@ function DoctorLayout() {
   return (
     <ProtectedRoute role="doctor">
       <div className="min-h-screen bg-surface-container/30 flex">
+        {/* Bouton hamburger mobile */}
+        <SidebarToggle />
+
         <DoctorSidebar />
-        <main className="flex-1 ml-64 min-h-screen overflow-x-hidden">
+
+        {/*
+          Sur desktop : décalage fixe de 256px (ml-64) pour la sidebar.
+          Sur mobile  : pas de décalage (la sidebar est en overlay).
+        */}
+        <main className="flex-1 md:ml-64 min-h-screen overflow-x-hidden">
           <Outlet />
         </main>
       </div>
@@ -77,8 +107,11 @@ function AdminLayout() {
   return (
     <ProtectedRoute role="admin">
       <div className="min-h-screen bg-surface-container/30 flex">
+        <SidebarToggle />
+
         <AdminSidebar />
-        <main className="flex-1 ml-64 min-h-screen overflow-x-hidden">
+
+        <main className="flex-1 md:ml-64 min-h-screen overflow-x-hidden">
           <Outlet />
         </main>
       </div>
@@ -93,70 +126,49 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* ── Auth ── */}
-        <Route path="/connexion" element={<UserLoginPage />} />
-        <Route path="/inscription" element={<UserRegisterPage />} />
+        <Route path="/connexion"      element={<UserLoginPage />} />
+        <Route path="/inscription"    element={<UserRegisterPage />} />
         <Route path="/verifier-email" element={<VerifyEmailPage />} />
         <Route path="/medecin/connexion" element={<DoctorLoginPage />} />
-        <Route path="/admin/connexion" element={<AdminLoginPage />} />
+        <Route path="/admin/connexion"   element={<AdminLoginPage />} />
 
         {/* ── Patient ── */}
         <Route element={<PatientLayout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/medecins" element={<DoctorsPage />} />
+          <Route path="/"           element={<HomePage />} />
+          <Route path="/medecins"   element={<DoctorsPage />} />
           <Route path="/medecins/:id" element={<DoctorProfilePage />} />
-          <Route path="/a-propos" element={<AboutPage />} />
+          <Route path="/a-propos"   element={<AboutPage />} />
 
-          {/* Protected patient routes */}
-          <Route
-            path="/mes-rendez-vous"
-            element={
-              <ProtectedRoute role="user">
-                <MyAppointmentsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/mon-profil"
-            element={
-              <ProtectedRoute role="user">
-                <UserProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notifications"
-            element={
-              <ProtectedRoute role="user">
-                <NotificationsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/paiement"
-            element={
-              <ProtectedRoute role="user">
-                <PaymentPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/mes-rendez-vous" element={
+            <ProtectedRoute role="user"><MyAppointmentsPage /></ProtectedRoute>
+          } />
+          <Route path="/mon-profil" element={
+            <ProtectedRoute role="user"><UserProfilePage /></ProtectedRoute>
+          } />
+          <Route path="/notifications" element={
+            <ProtectedRoute role="user"><NotificationsPage /></ProtectedRoute>
+          } />
+          <Route path="/paiement" element={
+            <ProtectedRoute role="user"><PaymentPage /></ProtectedRoute>
+          } />
         </Route>
 
         {/* ── Doctor Portal ── */}
         <Route path="/medecin" element={<DoctorLayout />}>
           <Route index element={<Navigate to="/medecin/tableau-de-bord" replace />} />
           <Route path="tableau-de-bord" element={<DoctorDashboardPage />} />
-          <Route path="rendez-vous" element={<DoctorAppointmentsPage />} />
-          <Route path="profil" element={<DoctorProfileEditPage />} />
-          <Route path="gains" element={<DoctorEarningsPage />} />
+          <Route path="rendez-vous"     element={<DoctorAppointmentsPage />} />
+          <Route path="profil"          element={<DoctorProfileEditPage />} />
+          <Route path="gains"           element={<DoctorEarningsPage />} />
         </Route>
 
         {/* ── Admin Portal ── */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/tableau-de-bord" replace />} />
           <Route path="tableau-de-bord" element={<AdminDashboardPage />} />
-          <Route path="medecins" element={<AdminDoctorsPage />} />
-          <Route path="patients" element={<AdminPatientsPage />} />
-          <Route path="rendez-vous" element={<AdminAppointmentsPage />} />
+          <Route path="medecins"        element={<AdminDoctorsPage />} />
+          <Route path="patients"        element={<AdminPatientsPage />} />
+          <Route path="rendez-vous"     element={<AdminAppointmentsPage />} />
         </Route>
 
         {/* ── 404 ── */}
